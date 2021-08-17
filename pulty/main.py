@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
 import MySQLdb
+import csv
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
@@ -11,7 +12,7 @@ headers = {
 HOST = "localhost"
 USERNAME = "root"
 PASSWORD = "password123"
-DATABASE = "pultid"
+DATABASE = "pultit2"
 
 LINK = "https://pulty.tv"
 append = "product/category"
@@ -26,7 +27,7 @@ description = soup.find(class_="lmenu").find_all("a")
 
 
 def pults_listing(last_pult_url2):
-    global text
+    global text1
     third_level = requests.get(last_pult_url2)
     soup3 = BeautifulSoup(third_level.content, "lxml", from_encoding=encoding1)
     remotes_html = soup3.find('div', class_="tovarlist").find_all('div', class_='tblockw')
@@ -34,7 +35,7 @@ def pults_listing(last_pult_url2):
     for remote in remotes_html:
         remotes_url = remote.find_all("a")
         for remote_url in remotes_url:
-            text = remote_url.text
+            text1 = remote_url.text
             pult_url = LINK + remote_url.get("href")
             # print(f"{text} - {pult_url}")
             pult_arr.append(pult_url)
@@ -85,53 +86,76 @@ def pults_listing(last_pult_url2):
                         else:
                             pult_desriction = pult_desriction
                         if len(pult_desriction) > 0:
-                            pult_desriction = pult_desriction.split()
-                            pult_desriction[0] = pult_desriction[0].title()
-                            if pult_desriction[0] == 'Bbk':
-                                pult_desriction[0] = pult_desriction[0].upper()
-                            pult_desriction = " ".join(pult_desriction)
-                        if ' , ' in pult_desriction:
-                            pult_desriction = pult_desriction.replace(" , ", ", ")
-                        if " ." or " . " in pult_desriction:
-                            pult_desriction = pult_desriction.replace(" .", ". ")
+                            try:
+                                pult_desriction = pult_desriction.split()
+                                pult_desriction[0] = pult_desriction[
+                                    0].title()  # Вывести перове слово с заглавной буквы
 
-                        pult_desriction = " ".join(pult_desriction.split())
+                                if pult_desriction[0] == 'Bbk':
+                                    pult_desriction[0] = pult_desriction[0].upper()
+                                pult_desriction = " ".join(pult_desriction)
+                                if ' , ' in pult_desriction:
+                                    pult_desriction = pult_desriction.replace(" , ", ", ")
+                                if " ." or " . " in pult_desriction:
+                                    pult_desriction = pult_desriction.replace(" .", ". ")
+                                pult_desriction = " ".join(pult_desriction.split())
 
-                        pult_dict[arrs[4]] = {"Категория": item_text, "Товар": p_headerd}, {
-                            arrs[0].strip(':'): arrs[1]}, {
-                                                 arrs[5].strip(':'): arrs[6]}, {
-                                                 names: pult_desriction}, {
-                                                 "JPG": image}
-                        print(pult_dict)
+                                pult_dict[arrs[4]] = {"Категория": item_text, "Товар": p_headerd}, {
+                                    arrs[0].strip(':'): arrs[1]}, {
+                                                         arrs[5].strip(':'): arrs[6]}, {
+                                                         names: pult_desriction}, {
+                                                         "JPG": image}
+                                print(pult_dict)
 
-                        # Open
-                        # database
-                        # connection
-                        db = MySQLdb.connect(HOST, USERNAME, PASSWORD, DATABASE)
-                        cursor = db.cursor()
-                        sql = "INSERT INTO classes(category, manufacturer, headname, article, price, picture, description) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(
-                            item_text, arrs[5].strip(':'), p_headerd, arrs[4], int(arrs[1]), image, pult_desriction)
+                                category = item_text
+                                manufacturer = arrs[6]
+                                headname = p_headerd
+                                article = arrs[4]
+                                price = int(arrs[1])
+                                picture = image
+                                description = pult_desriction
+                                db = MySQLdb.connect(HOST, USERNAME, PASSWORD, DATABASE, charset='utf8')
+                                cursor = db.cursor()
+                                sql = "INSERT INTO pultit2(category, manufacturer, headname, " \
+                                      "article, price, picture, description) VALUES ('{}', '{}', '{}', '{}', " \
+                                      "'{}', '{}', '{}')".format(category, manufacturer, headname,
+                                                                 article, price, picture, description)
 
-                        # print(type(item_text))
-                        # print(type(arrs[5].strip(':')))
-                        # print(type(p_headerd))
-                        # print(type(arrs[4]))
-                        # print(type(int(arrs[1])))
-                        # print(type(image))
-                        # print(type(pult_desriction))
+                                cursor.execute(sql)
+                                db.commit()
 
-                        cursor.execute(sql)
-                        db.commit()
-                        # try:
-                        #     # Execute the SQL command
-                        #     cursor.execute(sql)
-                        #     # Commit your changes in the database
-                        #     db.commit()
-                        # except:
-                        #     # Rollback in case there is any error
-                        #     db.rollback()
-                        #     # disconnect from server
-                        #     db.close()
+                            except:
+                                print("no")
+
+            # with open(f"data.csv", "a", newline='', encoding="utf-8") as file:
+            #     writer = csv.writer(file)
+            #     writer.writerow(
+            #         (
+            #             category, manufacturer, headname, article, price, picture, description
+            #         )
+            #     )
+            # with open('data.csv', newline='',
+            #           encoding="utf-8") as csvfile:  # публикация последних объявлений из b файла
+            #     b_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
+            #     for item in b_reader:
+            #         category1 = item[0]
+            #         manufacturer1 = item[1]
+            #         headname1 = item[2]
+            #         article1 = item[3]
+            #         price1 = [4]
+            #         picture1 = item[5]
+            #         description1 = item[6]
+
+        # try:
+        #     # Execute the SQL command
+        #     cursor.execute(sql)
+        #     # Commit your changes in the database
+        #     db.commit()
+        # except:
+        #     # Rollback in case there is any error
+        #     db.rollback()
+        #     # disconnect from server
+        #     db.close()
 
 
 def image_downloading(arrs, images):
@@ -144,9 +168,12 @@ def image_downloading(arrs, images):
 
 def main():
     global item_text, encoding, encoding1
-    for brend in description:  # [0:1]
-        item_text = brend.text
-        item_url = LINK + brend.get("href")
+    nom = 1
+    for brends in description[12:]:  # [0:1]
+        print(f"description - {nom}")
+        nom += 1
+        item_text = brends.text
+        item_url = LINK + brends.get("href")
         print(f"{item_text} - {item_url}")
 
         second_level_url = requests.get(item_url)
@@ -154,13 +181,11 @@ def main():
                                                                                           '').lower() else None
         soup1 = BeautifulSoup(second_level_url.content, "lxml", from_encoding=encoding)
 
-        # brand_list = soup1.find(text="Akira").find_parent()
-        # print(brand_list)
-
         brands = soup1.find(class_="cmenu").find_all("a")
         n = 0
-        for brend in brands:  # [2:3]
+        for brend in brands[6:]:  # [5:6]
             n += 1
+            print(f"brands - {n}")
             brand_text = brend.text
             first_url = LINK + brend.get("href")
             print(f"{n} - {brand_text} - {first_url}")

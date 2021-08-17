@@ -1,7 +1,7 @@
-pult_desriction = 'https://pulty.tv/images/products/watermark/55b5298133649.jpg'
-addr = '/image/'
-print(addr+pult_desriction.split('/')[-1])
-#
+# pult_desriction = 'https://pulty.tv/images/products/watermark/55b5298133649.jpg'
+# addr = '/image/'
+# print(addr+pult_desriction.split('/')[-1])
+# #
 # if 'пульт' in pult_desriction:
 #     pult_desriction = pult_desriction.replace("пульт", " пульт ")
 # if 'Пульт' in pult_desriction:
@@ -10,9 +10,9 @@ print(addr+pult_desriction.split('/')[-1])
 #     pult_desriction = pult_desriction.replace("Данный", " Данный ")
 # if 'домашний' in pult_desriction:
 #     pult_desriction = pult_desriction.replace("домашний", " домашний ")
-#
-#
-# if len(pult_desriction) > 0:
+# #
+# #
+# # if len(pult_desriction) > 0:
 #     pult_desriction = pult_desriction.split()
 #     pult_desriction[0] = pult_desriction[0].title()
 #     if pult_desriction[0] == 'Bbk':
@@ -28,4 +28,9 @@ print(addr+pult_desriction.split('/')[-1])
 # if pult_desriction[0].islower():
 #     pult_desriction.title()
 
-print(pult_desriction)
+x = "123456789"
+print(x[4:])
+
+
+
+# print(pult_desriction)
