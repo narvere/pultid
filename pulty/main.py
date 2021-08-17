@@ -1,7 +1,5 @@
 from bs4 import BeautifulSoup
-import requests, os
-
-# random, time
+import requests
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
@@ -11,8 +9,12 @@ headers = {
 LINK = "https://pulty.tv"
 append = "product/category"
 
+r = requests.get(LINK)
+encoding = r.encoding if 'charset' in r.headers.get('content-type', '').lower() else None
+soup = BeautifulSoup(r.content, "lxml", from_encoding=encoding)
+
 respond = requests.get(url=LINK, headers=headers)
-soup = BeautifulSoup(respond.text, "lxml")
+# soup = BeautifulSoup(respond.text, "lxml")
 
 # shit_number = soup.find(text="ÐÐ»Ñ Ð´Ð¾Ð¼Ð°ÑÐ½ÐµÐ³Ð¾ ÐºÐ¸Ð½Ð¾ÑÐµÐ°ÑÑÐ°").find_parent().find_parent().find_parent().find_parent()
 # print(shit_number)
