@@ -10,6 +10,7 @@ LINK = "https://pulty.tv"
 append = "product/category"
 pagination = "?page="
 first_pagination = "?page=1"
+addr = '/image/'
 
 r = requests.get(LINK)
 encoding = r.encoding if 'charset' in r.headers.get('content-type', '').lower() else None
@@ -49,7 +50,8 @@ def pults_listing(last_pult_url2):
             for p_headerd in description777:
                 for gg in description55:
                     for pic in pics:
-                        image = LINK + pic.find("img").get('src')
+                        images = LINK + pic.find("img").get('src')
+
                         names = gg.text
                         try:
                             pult_desriction = description52.text.split(":")[1].replace(u'\xa0', u' ').replace('\n', ' ')
@@ -57,16 +59,46 @@ def pults_listing(last_pult_url2):
                             pult_desriction = description52.text.split(":")[0].replace(u'\xa0', u' ').replace('\n', ' ')
                         p_headerd = p_headerd.text
                         arrs = pr.text.replace('\n', ' ').split()
-                        # print(pr.text.strip('\n').split())
+
+                        # Download image
+                        # image_bytes = requests.get(f"{images}").content
+                        # nr = arrs[4]
+                        # with open(f"image/{nr}.jpg", 'wb') as file:
+                        #     file.write((image_bytes))
+                        # print(f"Изображение {nr} загружено.")
+
+                        image = addr + arrs[4] + '.jpg'
+
+                        if 'пульт' in pult_desriction:
+                            pult_desriction = pult_desriction.replace("пульт", " пульт")
+                        if 'Пульт' in pult_desriction:
+                            pult_desriction = pult_desriction.replace("Пульт", " Пульт")
+                        if 'Данный' in pult_desriction:
+                            pult_desriction = pult_desriction.replace("Данный", " Данный")
+                        if 'домашний' in pult_desriction:
+                            pult_desriction = pult_desriction.replace("домашний", " домашний")
                         if "Возможная" in pult_desriction:
                             pult_desriction = pult_desriction[:pult_desriction.index("Возможная")]
                         elif "Данный пульт" in pult_desriction:
                             pult_desriction = pult_desriction[:pult_desriction.index("Данный пульт")]
                         else:
                             pult_desriction = pult_desriction
+                        if len(pult_desriction) > 0:
+                            pult_desriction = pult_desriction.split()
+                            pult_desriction[0] = pult_desriction[0].title()
+                            if pult_desriction[0] == 'Bbk':
+                                pult_desriction[0] = pult_desriction[0].upper()
+                            pult_desriction = " ".join(pult_desriction)
+                        if ' , ' in pult_desriction:
+                            pult_desriction = pult_desriction.replace(" , ", ", ")
+                        if " ." or " . " in pult_desriction:
+                            pult_desriction = pult_desriction.replace(" .", ". ")
 
-                        pult_dict[arrs[4]] = {"Товар": p_headerd}, {arrs[0].strip(':'): arrs[1]}, {
-                            arrs[5].strip(':'): arrs[6]}, {
+                        pult_desriction = " ".join(pult_desriction.split())
+
+                        pult_dict[arrs[4]] = {"Категория": item_text, "Товар": p_headerd}, {
+                            arrs[0].strip(':'): arrs[1]}, {
+                                                 arrs[5].strip(':'): arrs[6]}, {
                                                  names: pult_desriction}, {
                                                  "JPG": image}
                         print(pult_dict)
@@ -80,7 +112,7 @@ def pults_listing(last_pult_url2):
     # print(remotes_html2)
 
 
-for brend in description[0:1]:  # [0:1]
+for brend in description:  # [0:1]
     item_text = brend.text
     item_url = LINK + brend.get("href")
     print(f"{item_text} - {item_url}")
