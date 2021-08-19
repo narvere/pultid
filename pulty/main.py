@@ -1,10 +1,17 @@
 from bs4 import BeautifulSoup
 import requests
+import MySQLdb
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
                   " AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36"
 }
+
+# SQL connection data to connect and save the data in
+HOST = "localhost"
+USERNAME = "root"
+PASSWORD = "password123"
+DATABASE = "pultid"
 
 LINK = "https://pulty.tv"
 append = "product/category"
@@ -15,7 +22,6 @@ addr = '/image/'
 r = requests.get(LINK)
 encoding = r.encoding if 'charset' in r.headers.get('content-type', '').lower() else None
 soup = BeautifulSoup(r.content, "lxml", from_encoding=encoding)
-
 description = soup.find(class_="lmenu").find_all("a")
 
 
@@ -60,12 +66,7 @@ def pults_listing(last_pult_url2):
                         p_headerd = p_headerd.text
                         arrs = pr.text.replace('\n', ' ').split()
 
-                        # Download image
-                        # image_bytes = requests.get(f"{images}").content
-                        # nr = arrs[4]
-                        # with open(f"image/{nr}.jpg", 'wb') as file:
-                        #     file.write((image_bytes))
-                        # print(f"Изображение {nr} загружено.")
+                        image_downloading(arrs, images)
 
                         image = addr + arrs[4] + '.jpg'
 
@@ -103,102 +104,136 @@ def pults_listing(last_pult_url2):
                                                  "JPG": image}
                         print(pult_dict)
 
-    ###end
+                        # Open
+                        # database
+                        # connection
+                        db = MySQLdb.connect(HOST, USERNAME, PASSWORD, DATABASE)
+                        cursor = db.cursor()
+                        sql = "INSERT INTO classes(category, manufacturer, headname, article, price, picture, description) VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(
+                            item_text, arrs[5].strip(':'), p_headerd, arrs[4], int(arrs[1]), image, pult_desriction)
 
-    # print(pult_arr)
-    # third_level = requests.get(pult_arr)
-    # soup4 = BeautifulSoup(third_level.content, "lxml", from_encoding=encoding1)
-    # remotes_html2 = soup4.find(text="AV100").find_parent()
-    # print(remotes_html2)
+                        # print(type(item_text))
+                        # print(type(arrs[5].strip(':')))
+                        # print(type(p_headerd))
+                        # print(type(arrs[4]))
+                        # print(type(int(arrs[1])))
+                        # print(type(image))
+                        # print(type(pult_desriction))
+
+                        cursor.execute(sql)
+                        db.commit()
+                        # try:
+                        #     # Execute the SQL command
+                        #     cursor.execute(sql)
+                        #     # Commit your changes in the database
+                        #     db.commit()
+                        # except:
+                        #     # Rollback in case there is any error
+                        #     db.rollback()
+                        #     # disconnect from server
+                        #     db.close()
 
 
-for brend in description:  # [0:1]
-    item_text = brend.text
-    item_url = LINK + brend.get("href")
-    print(f"{item_text} - {item_url}")
+def image_downloading(arrs, images):
+    image_bytes = requests.get(f"{images}").content
+    nr = arrs[4]
+    with open(f"image/{nr}.jpg", 'wb') as file:
+        file.write((image_bytes))
+    print(f"Изображение {nr} загружено.")
 
-    second_level_url = requests.get(item_url)
-    encoding = second_level_url.encoding if 'charset' in second_level_url.headers.get('content-type',
-                                                                                      '').lower() else None
-    soup1 = BeautifulSoup(second_level_url.content, "lxml", from_encoding=encoding)
 
-    # brand_list = soup1.find(text="Akira").find_parent()
-    # print(brand_list)
+def main():
+    global item_text, encoding, encoding1
+    for brend in description:  # [0:1]
+        item_text = brend.text
+        item_url = LINK + brend.get("href")
+        print(f"{item_text} - {item_url}")
 
-    brands = soup1.find(class_="cmenu").find_all("a")
-    n = 0
-    for brend in brands:  # [2:3]
-        n += 1
-        brand_text = brend.text
-        first_url = LINK + brend.get("href")
-        print(f"{n} - {brand_text} - {first_url}")
+        second_level_url = requests.get(item_url)
+        encoding = second_level_url.encoding if 'charset' in second_level_url.headers.get('content-type',
+                                                                                          '').lower() else None
+        soup1 = BeautifulSoup(second_level_url.content, "lxml", from_encoding=encoding)
 
-        # СПИСОК ВСЕХ БРЕНДОВ
-        # brands = soup1.find(class_="brands").find_all("a")
-        # for item in brands:
-        #     brand_text = item.text
-        #     brand_url = LINK + item.get("href")
-        #     print(f"{brand_text} - {brand_url}")
+        # brand_list = soup1.find(text="Akira").find_parent()
+        # print(brand_list)
 
-        ###пауза
-        arr = []
-        arr2 = []
+        brands = soup1.find(class_="cmenu").find_all("a")
+        n = 0
+        for brend in brands:  # [2:3]
+            n += 1
+            brand_text = brend.text
+            first_url = LINK + brend.get("href")
+            print(f"{n} - {brand_text} - {first_url}")
 
-        third_level_url = requests.get(first_url)
-        encoding1 = third_level_url.encoding if 'charset' in third_level_url.headers.get('content-type',
-                                                                                         '').lower() else None
-        soup2 = BeautifulSoup(third_level_url.content, "lxml", from_encoding=encoding1)
+            # СПИСОК ВСЕХ БРЕНДОВ
+            # brands = soup1.find(class_="brands").find_all("a")
+            # for item in brands:
+            #     brand_text = item.text
+            #     brand_url = LINK + item.get("href")
+            #     print(f"{brand_text} - {brand_url}")
 
-        pages = soup2.find('div', class_="pgw")
-        try:
-            page_numbers = pages.text
-            for page in page_numbers:
-                if page.isnumeric():
-                    arr.append(page)
-            last_pult_url = first_url + pagination + arr[-1]
-            x = range(1, int(arr[-1]) + 1, 1)
-            for n in x:
-                last_pult_url2 = first_url + pagination + str(n)
+            ###пауза
+            arr = []
+            arr2 = []
+
+            third_level_url = requests.get(first_url)
+            encoding1 = third_level_url.encoding if 'charset' in third_level_url.headers.get('content-type',
+                                                                                             '').lower() else None
+            soup2 = BeautifulSoup(third_level_url.content, "lxml", from_encoding=encoding1)
+
+            pages = soup2.find('div', class_="pgw")
+            try:
+                page_numbers = pages.text
+                for page in page_numbers:
+                    if page.isnumeric():
+                        arr.append(page)
+                last_pult_url = first_url + pagination + arr[-1]
+                x = range(1, int(arr[-1]) + 1, 1)
+                for n in x:
+                    last_pult_url2 = first_url + pagination + str(n)
+                    # print(last_pult_url2)
+                    pults_listing(last_pult_url2)
+
+                ###
+
+                # third_level_url = requests.get(last_pult_url)
+                # encoding1 = third_level_url.encoding if 'charset' in third_level_url.headers.get('content-type',
+                #                                                                                  '').lower() else None
+                # soup3 = BeautifulSoup(third_level_url.content, "lxml", from_encoding=encoding1)
+                #
+                # pages = soup3.find('div', class_="pgw")
+                # page_numbers = pages.text
+                #
+                # for page in page_numbers:
+                #     if page.isnumeric():
+                #         arr2.append(page)
+                #
+                # x = range(1,int(arr2[-1])+1,1)
+                # for n in x:
+                #     last_pult_url2 = brand_url + pagination + str(n)
+                #     print(last_pult_url2)
+                #
+                # last_pult_url2 = brand_url + pagination + arr2[-1]
                 # print(last_pult_url2)
-                pults_listing(last_pult_url2)
 
-            ###
+                ###
 
-            # third_level_url = requests.get(last_pult_url)
-            # encoding1 = third_level_url.encoding if 'charset' in third_level_url.headers.get('content-type',
-            #                                                                                  '').lower() else None
-            # soup3 = BeautifulSoup(third_level_url.content, "lxml", from_encoding=encoding1)
-            #
-            # pages = soup3.find('div', class_="pgw")
-            # page_numbers = pages.text
-            #
-            # for page in page_numbers:
-            #     if page.isnumeric():
-            #         arr2.append(page)
-            #
-            # x = range(1,int(arr2[-1])+1,1)
-            # for n in x:
-            #     last_pult_url2 = brand_url + pagination + str(n)
-            #     print(last_pult_url2)
-            #
-            # last_pult_url2 = brand_url + pagination + arr2[-1]
-            # print(last_pult_url2)
+                # for ar in arr:
+                #     brand_url1 = brand_url + pagination + ar
+                #     print(brand_url1)
 
-            ###
+                # remotes_html = soup2.find('div', class_="tovarlist").find_all('div', class_='tblockw')
 
-            # for ar in arr:
-            #     brand_url1 = brand_url + pagination + ar
-            #     print(brand_url1)
+                # for remote in remotes_html:
+                #     remotes_url = remote.find_all("a")
+                #     for remote_url in remotes_url:
+                #         text = remote_url.text
+                #         pult_url = LINK + remote_url.get("href")
+                #         print(f"{text} - {pult_url}")
 
-            # remotes_html = soup2.find('div', class_="tovarlist").find_all('div', class_='tblockw')
+            except:
+                pults_listing(first_url)
+                # print(first_url)
 
-            # for remote in remotes_html:
-            #     remotes_url = remote.find_all("a")
-            #     for remote_url in remotes_url:
-            #         text = remote_url.text
-            #         pult_url = LINK + remote_url.get("href")
-            #         print(f"{text} - {pult_url}")
 
-        except:
-            pults_listing(first_url)
-            # print(first_url)
+main()
